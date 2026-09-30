@@ -1,7 +1,7 @@
-"""Graph state definitions and data structures for the Deep Research agent."""
+"""Deep Research Agent 的图状态定义与数据结构。"""
 
 import operator
-from typing import Annotated, Optional
+from typing import Annotated, Literal, Optional
 
 from langchain_core.messages import MessageLikeRepresentation
 from langgraph.graph import MessagesState
@@ -10,60 +10,98 @@ from typing_extensions import TypedDict
 
 
 ###################
-# Structured Outputs
+# 结构化输出
 ###################
 class ConductResearch(BaseModel):
-    """Call this tool to conduct research on a specific topic."""
+    """调用此工具研究一个具体主题。"""
+    research_dimension: Literal[
+        "产品定位",
+        "目标用户",
+        "核心能力",
+        "商业模式",
+        "近期动态",
+        "补充研究",
+    ] = Field(
+        description="本次研究所属的固定竞品分析维度；不属于五个标准维度的补充任务使用“补充研究”。",
+    )
     research_topic: str = Field(
-        description="The topic to research. Should be a single topic, and should be described in high detail (at least a paragraph).",
+        description="需要研究的主题。应当只包含一个主题，并使用至少一个自然段进行详细描述。",
     )
 
 class ResearchComplete(BaseModel):
-    """Call this tool to indicate that the research is complete."""
+    """调用此工具表示研究已经完成。"""
 
 class Summary(BaseModel):
-    """Research summary with key findings."""
+    """包含关键发现的研究摘要。"""
     
     summary: str
     key_excerpts: str
 
+
+class ResearchEvidence(BaseModel):
+    """单条研究证据的结构化表示。"""
+
+    source_title: str = Field(description="来源页面或材料的标题。")
+    url: str = Field(description="可访问的来源 URL；确实没有 URL 时填写“公开链接缺失”。")
+    published_at: str = Field(description="来源发布日期；无法确认时填写“日期未知”。")
+    evidence: str = Field(description="该来源支持的事实或判断，不得超出来源内容。")
+    confidence: Literal["高", "中", "低"] = Field(description="根据来源权威性、时效性和交叉验证情况判断的置信度。")
+
+
+class StructuredResearchResult(BaseModel):
+    """单个 Researcher 提交给 Supervisor 的结构化研究结果。"""
+
+    research_dimension: Literal[
+        "产品定位",
+        "目标用户",
+        "核心能力",
+        "商业模式",
+        "近期动态",
+        "补充研究",
+    ] = Field(description="本次研究对应的竞品分析维度。")
+    summary: str = Field(description="该维度的核心结论摘要。")
+    key_findings: list[str] = Field(description="有证据支持的关键发现列表。")
+    comparison_points: list[str] = Field(description="不同竞品之间可直接比较的观察列表。")
+    evidence: list[ResearchEvidence] = Field(description="支撑结论的结构化证据列表。")
+    evidence_gaps: list[str] = Field(description="尚无可靠公开证据、存在冲突或需要进一步验证的信息。")
+
 class ClarifyWithUser(BaseModel):
-    """Model for user clarification requests."""
+    """用户澄清请求的数据模型。"""
     
     need_clarification: bool = Field(
-        description="Whether the user needs to be asked a clarifying question.",
+        description="是否需要向用户提出澄清问题。",
     )
     question: str = Field(
-        description="A question to ask the user to clarify the report scope",
+        description="用于请用户澄清报告范围的问题。",
     )
     verification: str = Field(
-        description="Verify message that we will start research after the user has provided the necessary information.",
+        description="确认用户提供必要信息后将开始研究的消息。",
     )
 
 class ResearchQuestion(BaseModel):
-    """Research question and brief for guiding research."""
+    """用于指导研究的研究问题与简报。"""
     
     research_brief: str = Field(
-        description="A research question that will be used to guide the research.",
+        description="用于指导后续研究的研究问题。",
     )
 
 
 ###################
-# State Definitions
+# State 定义
 ###################
 
 def override_reducer(current_value, new_value):
-    """Reducer function that allows overriding values in state."""
+    """允许覆盖 State 中现有值的 Reducer 函数。"""
     if isinstance(new_value, dict) and new_value.get("type") == "override":
         return new_value.get("value", new_value)
     else:
         return operator.add(current_value, new_value)
     
 class AgentInputState(MessagesState):
-    """InputState is only 'messages'."""
+    """输入 State，只包含 `messages`。"""
 
 class AgentState(MessagesState):
-    """Main agent state containing messages and research data."""
+    """主 Agent State，包含消息和研究数据。"""
     
     supervisor_messages: Annotated[list[MessageLikeRepresentation], override_reducer]
     research_brief: Optional[str]
@@ -72,7 +110,7 @@ class AgentState(MessagesState):
     final_report: str
 
 class SupervisorState(TypedDict):
-    """State for the supervisor that manages research tasks."""
+    """Supervisor 用于管理研究任务的 State。"""
     
     supervisor_messages: Annotated[list[MessageLikeRepresentation], override_reducer]
     research_brief: str
@@ -81,16 +119,17 @@ class SupervisorState(TypedDict):
     raw_notes: Annotated[list[str], override_reducer] = []
 
 class ResearcherState(TypedDict):
-    """State for individual researchers conducting research."""
+    """单个 Researcher 执行研究时使用的 State。"""
     
     researcher_messages: Annotated[list[MessageLikeRepresentation], operator.add]
     tool_call_iterations: int = 0
     research_topic: str
+    research_dimension: str
     compressed_research: str
     raw_notes: Annotated[list[str], override_reducer] = []
 
 class ResearcherOutputState(BaseModel):
-    """Output state from individual researchers."""
+    """单个 Researcher 的输出 State。"""
     
     compressed_research: str
     raw_notes: Annotated[list[str], override_reducer] = []

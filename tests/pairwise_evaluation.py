@@ -3,33 +3,33 @@ from langsmith.evaluation import evaluate_comparative
 from pydantic import BaseModel, Field
 
 HEAD_TO_HEAD_PROMPT = """
-We are testing out two different implementations of a deep research agent. This research agent is designed to conduct deep research on a given question.
+我们正在测试 Deep Research Agent 的两种不同实现。该 Agent 用于围绕给定问题开展深度研究。
 
-This was the question: 
+研究问题：
 {question}
 
-First Implementation's Response:
+第一种实现的回答：
 {answer_a}
 
-Second Implementation's Response:
+第二种实现的回答：
 {answer_b}
 
-In order to evaluate these agents, keep the following criteria in mind:
-- A good research agent should research sufficient sources to answer the question. These sources should be diverse and high quality. More sources is not always necessarily better, but it is important to have ENOUGH sources to feel confident in the claims that are made.
-- A good research agent should completely and comprehensively answer the user's question. 
-- Deep research agents are expensive. The user expects a very good, and also very detailed answer. They should get all of the information that they need from this response, and should not have to ask for followups usually.
-- Citations should be provided for all claims, and should be formatted in a way that is easy to read and understand.
+评估这些 Agent 时，请考虑以下标准：
+- 优秀的 Research Agent 应研究足够多的来源来回答问题。来源应当多样且质量较高。来源并非越多越好，但数量和质量必须足以使报告主张可信；
+- 应完整、全面地回答用户问题；
+- Deep Research Agent 的运行成本较高，因此用户期待高质量且足够详细的答案。用户通常应能从回答中获得所需信息，而不必继续追问；
+- 所有主张都应提供引用，且引用格式应当易于阅读和理解。
 
-Important:
-These two implementations conducted research differently, and so they might have different information and different sources. This is a key point for you to evaluate.
-Which agent was able to find better sources and better answer the question? The #1 thing we care about the most is the quality and comprehensiveness of the answer.
+重要：
+两种实现采用了不同的研究方式，因此可能获得不同的信息和来源，这是需要重点评估的差异。
+请判断哪个 Agent 找到了更好的来源，并更好地回答了问题。最重要的评估标准是答案质量和完整性。
 
-With those criteria in mind, please select which response you prefer, and explain why!
+请根据以上标准选择更好的回答，并详细说明原因。
 """
 
 class HeadToHeadRanking(BaseModel):
-    reasoning: str = Field(description="The reasoning for why you selected the preferred answer. This should be a detailed explanation!")
-    preferred_answer: int = Field(description="The preferred answer between 1 and 2, where 1 is the first response, 2 is the second response.")
+    reasoning: str = Field(description="选择更优回答的原因，需要给出详细说明。")
+    preferred_answer: int = Field(description="在 1 和 2 中选择更优回答；1 表示第一个回答，2 表示第二个回答。")
 
 
 def head_to_head_evaluator(inputs: dict, outputs: list[dict]) -> list:
@@ -55,39 +55,39 @@ def head_to_head_evaluator(inputs: dict, outputs: list[dict]) -> list:
 
 
 ALL_THREE_PROMPT = """
-We are testing out three different implementations of a deep research agent. This research agent is designed to conduct deep research on a given question.
+我们正在测试 Deep Research Agent 的三种不同实现。该 Agent 用于围绕给定问题开展深度研究。
 
-This was the question: 
+研究问题：
 {question}
 
-First Implementation's Response:
+第一种实现的回答：
 {answer_a}
 
-Second Implementation's Response:
+第二种实现的回答：
 {answer_b}
 
-Third Implementation's Response:
+第三种实现的回答：
 {answer_c}
 
-In order to evaluate these agents, keep the following criteria in mind:
-- A good research agent should research sufficient sources to answer the question. These sources should be diverse and high quality. More sources is not always necessarily better, but it is important to have ENOUGH sources to feel confident in the claims that are made.
-- A good research agent should completely and comprehensively answer the user's question. 
-- Deep research agents are expensive. The user expects a very good, and also very detailed answer. They should get all of the information that they need from this response, and should not have to ask for followups usually.
-- Citations should be provided for all claims, and should be formatted in a way that is easy to read and understand.
+评估这些 Agent 时，请考虑以下标准：
+- 优秀的 Research Agent 应研究足够多的来源来回答问题。来源应当多样且质量较高。来源并非越多越好，但必须足以使报告主张可信；
+- 应完整、全面地回答用户问题；
+- Deep Research Agent 的运行成本较高，因此用户期待高质量且足够详细的答案，并且通常不必继续追问；
+- 所有主张都应提供引用，且引用格式应当易于阅读和理解。
 
-Important:
-These three implementations conducted research differently, and so they might have different information and different sources. This is a key point for you to evaluate.
-Which agent was able to find better sources and better answer the question? The #1 thing we care about the most is the quality and comprehensiveness of the answer.
+重要：
+三种实现采用了不同的研究方式，因此可能获得不同的信息和来源，这是需要重点评估的差异。
+请判断哪个 Agent 找到了更好的来源，并更好地回答了问题。最重要的评估标准是答案质量和完整性。
 
-With those criteria in mind, please rank the responses from 1 to 3, where 1 is the best response, 2 is the second best response, and 3 is the worst response.
-And please explain why you selected the ranking you did!
+请根据以上标准对三个回答进行排名：1 表示最佳，2 表示第二，3 表示最差。
+请详细说明采用该排名的原因。
 """
 
 class Rankings(BaseModel):
-    reasoning: str = Field(description="The reasoning for why you selected the preferred answer. This should be a detailed explanation!")
-    preferred_answer: int = Field(description="The preferred answer between 1 and 3, where 1 is the first response, 2 is the second response, and 3 is the third response.")
-    second_best_answer: int = Field(description="The second best answer between 1 and 3, where 1 is the first response, 2 is the second response, and 3 is the third response.")
-    worst_answer: int = Field(description="The worst answer between 1 and 3, where 1 is the first response, 2 is the second response, and 3 is the third response.")
+    reasoning: str = Field(description="采用当前排名的原因，需要给出详细说明。")
+    preferred_answer: int = Field(description="最佳回答的编号；1、2、3 分别表示第一、第二、第三个回答。")
+    second_best_answer: int = Field(description="第二名回答的编号；1、2、3 分别表示第一、第二、第三个回答。")
+    worst_answer: int = Field(description="最差回答的编号；1、2、3 分别表示第一、第二、第三个回答。")
 
 def free_for_all_evaluator(inputs: dict, outputs: list[dict]) -> list:
     grader_llm = ChatAnthropic(
@@ -116,13 +116,13 @@ multi_agent_workflow = "DR MAW - Tavily #-c6818a83"
 
 
 # evaluate_comparative(
-#     (single_agent_experiment_name, multi_agent_supervisor_experiment_name, multi_agent_workflow_experiment_name),  # Replace with the names/IDs of your experiments
+#     (single_agent_experiment_name, multi_agent_supervisor_experiment_name, multi_agent_workflow_experiment_name),  # 替换为需要比较的实验名称或 ID
 #     evaluators=[free_for_all_evaluator],
 #     randomize_order=True,
 # )
 
 evaluate_comparative(
-    (single_agent, multi_agent_supervisor_v2),  # Replace with the names/IDs of your experiments
+    (single_agent, multi_agent_supervisor_v2),  # 替换为需要比较的实验名称或 ID
     evaluators=[head_to_head_evaluator],
     randomize_order=True,
 )

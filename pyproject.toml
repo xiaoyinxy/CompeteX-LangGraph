@@ -61,6 +61,10 @@ packages = ["open_deep_research", "legacy", "tests"]
 "legacy" = "src/legacy"
 "tests" = "tests"
 
+[tool.pytest.ini_options]
+# 默认回归测试聚焦当前 CompeteX 工作流；旧版在线评测仍可按目录显式运行。
+testpaths = ["tests"]
+
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
 

@@ -1,4 +1,4 @@
-"""Configuration management for the Open Deep Research system."""
+"""Open Deep Research 系统的配置管理。"""
 
 import os
 from enum import Enum
@@ -9,36 +9,37 @@ from pydantic import BaseModel, Field
 
 
 class SearchAPI(Enum):
-    """Enumeration of available search API providers."""
+    """可用 Search API 提供商的枚举。"""
     
     ANTHROPIC = "anthropic"
     OPENAI = "openai"
     TAVILY = "tavily"
+    BING = "bing"
     NONE = "none"
 
 class MCPConfig(BaseModel):
-    """Configuration for Model Context Protocol (MCP) servers."""
+    """Model Context Protocol（MCP）服务器配置。"""
     
     url: Optional[str] = Field(
         default=None,
         optional=True,
     )
-    """The URL of the MCP server"""
+    """MCP 服务器 URL。"""
     tools: Optional[List[str]] = Field(
         default=None,
         optional=True,
     )
-    """The tools to make available to the LLM"""
+    """向 LLM 开放的工具。"""
     auth_required: Optional[bool] = Field(
         default=False,
         optional=True,
     )
-    """Whether the MCP server requires authentication"""
+    """MCP 服务器是否要求身份验证。"""
 
 class Configuration(BaseModel):
-    """Main configuration class for the Deep Research agent."""
+    """Deep Research Agent 的主配置类。"""
     
-    # General Configuration
+    # 通用配置
     max_structured_output_retries: int = Field(
         default=3,
         metadata={
@@ -47,7 +48,7 @@ class Configuration(BaseModel):
                 "default": 3,
                 "min": 1,
                 "max": 10,
-                "description": "Maximum number of retries for structured output calls from models"
+                "description": "模型进行结构化输出调用时的最大重试次数"
             }
         }
     )
@@ -57,7 +58,7 @@ class Configuration(BaseModel):
             "x_oap_ui_config": {
                 "type": "boolean",
                 "default": True,
-                "description": "Whether to allow the researcher to ask the user clarifying questions before starting research"
+                "description": "是否允许 Researcher 在开始研究前向用户提出澄清问题"
             }
         }
     )
@@ -67,64 +68,65 @@ class Configuration(BaseModel):
             "x_oap_ui_config": {
                 "type": "slider",
                 "default": 5,
-                "min": 1,
+                "min": 5,
                 "max": 20,
                 "step": 1,
-                "description": "Maximum number of research units to run concurrently. This will allow the researcher to use multiple sub-agents to conduct research. Note: with more concurrency, you may run into rate limits."
+                "description": "允许同时运行的最大研究单元数。Researcher 可以借此使用多个子 Agent 开展研究；并发数越高，越可能触发 API 限流。"
             }
         }
     )
-    # Research Configuration
+    # 研究配置
     search_api: SearchAPI = Field(
-        default=SearchAPI.TAVILY,
+        default=SearchAPI.BING,
         metadata={
             "x_oap_ui_config": {
                 "type": "select",
-                "default": "tavily",
-                "description": "Search API to use for research. NOTE: Make sure your Researcher Model supports the selected search API.",
+                "default": "bing",
+                "description": "研究使用的 Search API。请确认 Researcher Model 支持所选 Search API。",
                 "options": [
+                    {"label": "中文网页搜索（中国区、免费、无需 Key）", "value": SearchAPI.BING.value},
                     {"label": "Tavily", "value": SearchAPI.TAVILY.value},
-                    {"label": "OpenAI Native Web Search", "value": SearchAPI.OPENAI.value},
-                    {"label": "Anthropic Native Web Search", "value": SearchAPI.ANTHROPIC.value},
-                    {"label": "None", "value": SearchAPI.NONE.value}
+                    {"label": "OpenAI 原生 Web Search", "value": SearchAPI.OPENAI.value},
+                    {"label": "Anthropic 原生 Web Search", "value": SearchAPI.ANTHROPIC.value},
+                    {"label": "不使用搜索", "value": SearchAPI.NONE.value}
                 ]
             }
         }
     )
     max_researcher_iterations: int = Field(
-        default=6,
+        default=3,
         metadata={
             "x_oap_ui_config": {
                 "type": "slider",
-                "default": 6,
+                "default": 3,
                 "min": 1,
                 "max": 10,
                 "step": 1,
-                "description": "Maximum number of research iterations for the Research Supervisor. This is the number of times the Research Supervisor will reflect on the research and ask follow-up questions."
+                "description": "Research Supervisor 的最大研究轮数，即 Supervisor 反思研究结果并提出后续问题的最大次数。"
             }
         }
     )
     max_react_tool_calls: int = Field(
-        default=10,
+        default=5,
         metadata={
             "x_oap_ui_config": {
                 "type": "slider",
-                "default": 10,
+                "default": 5,
                 "min": 1,
                 "max": 30,
                 "step": 1,
-                "description": "Maximum number of tool calling iterations to make in a single researcher step."
+                "description": "单个 Researcher 执行过程中允许的最大工具调用轮数。"
             }
         }
     )
-    # Model Configuration
+    # 模型配置
     summarization_model: str = Field(
-        default="openai:gpt-4.1-mini",
+        default="deepseek:deepseek-v4-flash",
         metadata={
             "x_oap_ui_config": {
                 "type": "text",
-                "default": "openai:gpt-4.1-mini",
-                "description": "Model for summarizing research results from Tavily search results"
+                "default": "deepseek:deepseek-v4-flash",
+                "description": "用于总结 Tavily 搜索结果的模型"
             }
         }
     )
@@ -134,7 +136,7 @@ class Configuration(BaseModel):
             "x_oap_ui_config": {
                 "type": "number",
                 "default": 8192,
-                "description": "Maximum output tokens for summarization model"
+                "description": "总结模型的最大输出 Token 数"
             }
         }
     )
@@ -146,17 +148,17 @@ class Configuration(BaseModel):
                 "default": 50000,
                 "min": 1000,
                 "max": 200000,
-                "description": "Maximum character length for webpage content before summarization"
+                "description": "网页内容进入总结流程前允许的最大字符数"
             }
         }
     )
     research_model: str = Field(
-        default="openai:gpt-4.1",
+        default="deepseek:deepseek-v4-flash",
         metadata={
             "x_oap_ui_config": {
                 "type": "text",
-                "default": "openai:gpt-4.1",
-                "description": "Model for conducting research. NOTE: Make sure your Researcher Model supports the selected search API."
+                "default": "deepseek:deepseek-v4-flash",
+                "description": "用于执行研究的模型。请确认 Researcher Model 支持所选 Search API。"
             }
         }
     )
@@ -166,17 +168,17 @@ class Configuration(BaseModel):
             "x_oap_ui_config": {
                 "type": "number",
                 "default": 10000,
-                "description": "Maximum output tokens for research model"
+                "description": "研究模型的最大输出 Token 数"
             }
         }
     )
     compression_model: str = Field(
-        default="openai:gpt-4.1",
+        default="deepseek:deepseek-v4-flash",
         metadata={
             "x_oap_ui_config": {
                 "type": "text",
-                "default": "openai:gpt-4.1",
-                "description": "Model for compressing research findings from sub-agents. NOTE: Make sure your Compression Model supports the selected search API."
+                "default": "deepseek:deepseek-v4-flash",
+                "description": "用于压缩子 Agent 研究发现的模型。请确认 Compression Model 支持所选 Search API。"
             }
         }
     )
@@ -186,17 +188,17 @@ class Configuration(BaseModel):
             "x_oap_ui_config": {
                 "type": "number",
                 "default": 8192,
-                "description": "Maximum output tokens for compression model"
+                "description": "压缩模型的最大输出 Token 数"
             }
         }
     )
     final_report_model: str = Field(
-        default="openai:gpt-4.1",
+        default="deepseek:deepseek-v4-pro",
         metadata={
             "x_oap_ui_config": {
                 "type": "text",
-                "default": "openai:gpt-4.1",
-                "description": "Model for writing the final report from all research findings"
+                "default": "deepseek:deepseek-v4-pro",
+                "description": "根据全部研究发现撰写最终报告的模型"
             }
         }
     )
@@ -206,18 +208,18 @@ class Configuration(BaseModel):
             "x_oap_ui_config": {
                 "type": "number",
                 "default": 10000,
-                "description": "Maximum output tokens for final report model"
+                "description": "最终报告模型的最大输出 Token 数"
             }
         }
     )
-    # MCP server configuration
+    # MCP 服务器配置
     mcp_config: Optional[MCPConfig] = Field(
         default=None,
         optional=True,
         metadata={
             "x_oap_ui_config": {
                 "type": "mcp",
-                "description": "MCP server configuration"
+                "description": "MCP 服务器配置"
             }
         }
     )
@@ -227,7 +229,7 @@ class Configuration(BaseModel):
         metadata={
             "x_oap_ui_config": {
                 "type": "text",
-                "description": "Any additional instructions to pass along to the Agent regarding the MCP tools that are available to it."
+                "description": "传递给 Agent 的补充指令，用于说明可用的 MCP 工具。"
             }
         }
     )
@@ -237,7 +239,7 @@ class Configuration(BaseModel):
     def from_runnable_config(
         cls, config: Optional[RunnableConfig] = None
     ) -> "Configuration":
-        """Create a Configuration instance from a RunnableConfig."""
+        """根据 RunnableConfig 创建 Configuration 实例。"""
         configurable = config.get("configurable", {}) if config else {}
         field_names = list(cls.model_fields.keys())
         values: dict[str, Any] = {
@@ -247,6 +249,6 @@ class Configuration(BaseModel):
         return cls(**{k: v for k, v in values.items() if v is not None})
 
     class Config:
-        """Pydantic configuration."""
+        """Pydantic 配置。"""
         
         arbitrary_types_allowed = True

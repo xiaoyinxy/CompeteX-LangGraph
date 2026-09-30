@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CompeteX 中文竞品研究面试演示台">
+  <title>CompeteX · 中文研究台</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div><strong>CompeteX</strong><small>中文竞品研究台</small></div>
+      </div>
+      <div class="topbar-actions">
+        <div class="connection" id="connection"><i></i><span>正在连接本地服务</span></div>
+        <button class="icon-button" id="themeToggle" type="button" aria-label="切换明暗主题" title="切换明暗主题">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.64 5.64l1.42 1.42m9.88 9.88 1.42 1.42m0-12.72-1.42 1.42M7.06 16.94l-1.42 1.42M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="sidebar panel">
+        <button class="new-task" id="newTask" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          新建研究任务
+        </button>
+        <div class="nav-label">面试演示</div>
+        <button class="nav-item active" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM8 9h8M8 13h5"/></svg>
+          <span>当前研究</span><b id="taskBadge">待开始</b>
+        </button>
+        <div class="nav-label">快捷题目</div>
+        <div id="examples" class="example-list"></div>
+        <div class="sidebar-foot">
+          <div class="local-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v5c0 4.6 3.4 7.8 8 9 4.6-1.2 8-4.4 8-9V7l-8-4Z"/></svg><span><b>本地安全模式</b><small>数据仅发送至已配置模型</small></span></div>
+        </div>
+      </aside>
+
+      <section class="conversation panel">
+        <div class="section-head">
+          <div><span class="eyebrow">研究工作区</span><h1>竞品情报分析</h1></div>
+          <button class="ghost-button" id="clearChat" type="button">清空会话</button>
+        </div>
+        <div class="messages" id="messages" aria-live="polite">
+          <div class="welcome-card">
+            <div class="welcome-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 9.8 8.1 4 9l4.2 4.1-1 5.8 4.8-2.6 4.8 2.6-1-5.8L20 9l-5.8-.9L12 3Z"/></svg></div>
+            <span class="eyebrow">AI 研究助手</span>
+            <h2>把面试题，变成一份可验证的研究报告</h2>
+            <p>描述公司、产品与决策目标。我会澄清边界、拆分任务、并行检索，并区分事实、判断与建议。</p>
+            <div class="capabilities"><span>来源可追溯</span><span>研究过程可见</span><span>中文结构化报告</span></div>
+          </div>
+        </div>
+        <form class="composer" id="composer">
+          <label for="prompt">研究需求</label>
+          <textarea id="prompt" rows="3" placeholder="例如：对比三款 AI 会议助手，给出中国市场的 MVP 机会……" required></textarea>
+          <div class="composer-bottom">
+            <span><kbd>Enter</kbd> 发送 · <kbd>Shift</kbd> + <kbd>Enter</kbd> 换行</span>
+            <button id="sendButton" type="submit">
+              <span>开始研究</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3-6-7-1Zm7 1 3-3"/></svg>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <aside class="inspector panel">
+        <div class="section-head compact"><div><span class="eyebrow">运行轨迹</span><h2>研究进度</h2></div><span class="run-state" id="runState">待开始</span></div>
+        <div class="progress-wrap"><div class="progress-bar"><i id="progressBar"></i></div><span id="progressText">0%</span></div>
+        <ol class="timeline" id="timeline">
+          <li data-node="clarify_with_user"><i></i><div><b>理解研究目标</b><small>确认范围与交付标准</small></div><time>待处理</time></li>
+          <li data-node="write_research_brief"><i></i><div><b>制定研究计划</b><small>拆解核心研究问题</small></div><time>待处理</time></li>
+          <li data-node="research_supervisor"><i></i><div><b>并行采集证据</b><small>检索与交叉验证信息</small></div><time>待处理</time></li>
+          <li data-node="final_report_generation"><i></i><div><b>生成决策报告</b><small>综合事实、判断与建议</small></div><time>待处理</time></li>
+        </ol>
+        <div class="insight-card">
+          <div class="insight-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6m-5 3h4M8.5 14.5A6 6 0 1 1 15.5 14.5c-.9.7-1.5 1.5-1.5 2.5h-4c0-1-.6-1.8-1.5-2.5Z"/></svg>面试表达提示</div>
+          <p id="interviewTip">启动后可从右侧轨迹解释 Agent 如何把模糊需求转化为可审计的研究流程。</p>
+        </div>
+        <div class="metrics"><div><b id="sourceCount">0</b><span>引用来源</span></div><div><b id="elapsed">00:00</b><span>运行耗时</span></div><div><b id="nodeCount">0/4</b><span>完成节点</span></div></div>
+      </aside>
+    </main>
+  </div>
+  <script src="./app.js?v=4"></script>
+</body>
+</html>

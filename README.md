@@ -1,5 +1,7 @@
 # 🔬 Open Deep Research
 
+> **CompeteX 面试演示版**：本分支将官方 Open Deep Research 改造成面向 AI 产品团队的竞品情报研究 Agent。中文启动说明见 [README_COMPETEX_CN.md](README_COMPETEX_CN.md)，项目故事线见 [INTERVIEW_STORY_CN.md](INTERVIEW_STORY_CN.md)。改造内容包括本地免登录演示、成本友好的默认研究预算，以及区分事实、推断和建议的竞品报告规范。
+
 <img width="1388" height="298" alt="full_diagram" src="https://github.com/user-attachments/assets/12a2371b-8be2-4219-9b48-90503eb43c69" />
 
 Deep research has broken out as one of the most popular agent applications. This is a simple, configurable, fully open source deep research agent that works across many model providers, search tools, and MCP servers. It's performance is on par with many popular deep research agents ([see Deep Research Bench leaderboard](https://huggingface.co/spaces/Ayanami0730/DeepResearch-Leaderboard)).
@@ -44,7 +46,7 @@ cp .env.example .env
 
 ```bash
 # Install dependencies and start the LangGraph server
-uvx --refresh --from "langgraph-cli[inmem]" --with-editable . --python 3.11 langgraph dev --allow-blocking
+uvx --refresh --from "langgraph-cli[inmem]" --with-editable . --python 3.11 langgraph dev --allow-blocking --no-reload
 ```
 
 This will open the LangGraph Studio UI in your browser.
