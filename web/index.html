@@ -6,6 +6,7 @@
   <meta name="description" content="CompeteX 中文竞品研究面试演示台">
   <title>CompeteX · 中文研究台</title>
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./config.css?v=1">
 </head>
 <body>
   <div class="app-shell">
@@ -15,7 +16,11 @@
         <div><strong>CompeteX</strong><small>中文竞品研究台</small></div>
       </div>
       <div class="topbar-actions">
-        <div class="connection" id="connection"><i></i><span>正在连接本地服务</span></div>
+        <div class="connection" id="connection"><i></i><span>正在连接研究服务</span></div>
+        <button class="config-button" id="openConfig" type="button" aria-haspopup="dialog" aria-controls="configDialog">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>
+          <span>配置 Key</span>
+        </button>
         <button class="icon-button" id="themeToggle" type="button" aria-label="切换明暗主题" title="切换明暗主题">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.64 5.64l1.42 1.42m9.88 9.88 1.42 1.42m0-12.72-1.42 1.42M7.06 16.94l-1.42 1.42M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/></svg>
         </button>
@@ -36,7 +41,7 @@
         <div class="nav-label">快捷题目</div>
         <div id="examples" class="example-list"></div>
         <div class="sidebar-foot">
-          <div class="local-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v5c0 4.6 3.4 7.8 8 9 4.6-1.2 8-4.4 8-9V7l-8-4Z"/></svg><span><b>本地安全模式</b><small>数据仅发送至已配置模型</small></span></div>
+          <div class="local-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v5c0 4.6 3.4 7.8 8 9 4.6-1.2 8-4.4 8-9V7l-8-4Z"/></svg><span><b>BYOK 安全模式</b><small>Key 仅随本次研究请求发送</small></span></div>
         </div>
       </aside>
 
@@ -84,6 +89,26 @@
       </aside>
     </main>
   </div>
-  <script src="./app.js?v=4"></script>
+  <dialog class="config-dialog" id="configDialog" aria-labelledby="configTitle">
+    <form class="config-card" id="configForm">
+      <div class="config-head">
+        <div><span class="eyebrow">运行配置</span><h2 id="configTitle">连接你的模型</h2></div>
+        <button class="dialog-close" id="closeConfig" type="button" aria-label="关闭配置窗口">×</button>
+      </div>
+      <p class="config-intro">CompeteX 采用 BYOK（自带密钥）。密钥只保存在当前页面内存中，刷新后自动清除，也不会写入 GitHub 或 Vercel 环境变量。</p>
+      <div class="form-grid">
+        <label class="field"><span>模型服务商</span><select id="provider" required><option value="deepseek">DeepSeek</option><option value="openai">OpenAI</option><option value="anthropic">Anthropic</option><option value="google">Google Gemini</option></select></label>
+        <label class="field"><span id="modelKeyLabel">DeepSeek API Key</span><input id="modelKey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-..." required></label>
+        <label class="field"><span>研究模型</span><input id="researchModel" type="text" value="deepseek:deepseek-chat" autocomplete="off" required></label>
+        <label class="field"><span>报告模型</span><input id="reportModel" type="text" value="deepseek:deepseek-chat" autocomplete="off" required></label>
+        <label class="field"><span>网页搜索</span><select id="searchApi"><option value="bing">中文 Web 搜索（免费，无需 Key）</option><option value="tavily">Tavily 搜索</option><option value="none">不使用搜索</option></select></label>
+        <label class="field" id="tavilyField" hidden><span>Tavily API Key</span><input id="tavilyKey" type="password" autocomplete="off" spellcheck="false" placeholder="tvly-..."></label>
+      </div>
+      <label class="check-field"><input id="allowClarification" type="checkbox" checked><span>研究范围不清晰时，允许 Agent 先提一个澄清问题</span></label>
+      <div class="security-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v5c0 4.6 3.4 7.8 8 9 4.6-1.2 8-4.4 8-9V7l-8-4Z"/><path d="m9 12 2 2 4-4"/></svg><span>提交研究时，Key 会通过 HTTPS 发送到本项目的 Vercel 函数，再转发给所选模型服务商。服务端不记录、不持久化。</span></div>
+      <div class="config-actions"><button class="ghost-button" id="clearKeys" type="button">清除</button><button class="primary-button" type="submit">保存并开始</button></div>
+    </form>
+  </dialog>
+  <script src="./app.js?v=5"></script>
 </body>
 </html>

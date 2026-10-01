@@ -49,6 +49,14 @@ Set-Location -LiteralPath 'E:\AI项目\CompeteX-LangGraph'
 
 按 `Ctrl+C` 可同时停止两个服务。
 
+## Vercel 在线部署
+
+仓库根目录已包含 Vercel 所需的 FastAPI 入口 `app.py` 和 `vercel.json`。导入 GitHub 仓库即可同时部署静态研究台与 LangGraph API，无需在 Vercel 中保存模型密钥。
+
+在线版采用 BYOK（自带密钥）：用户在“配置 Key”窗口选择模型服务商并填写 API Key。密钥只保存在当前页面内存中，随单次 HTTPS 请求发送到本项目的 Vercel 函数，再由函数转发给模型服务商；刷新页面后自动清除。中文 Web 搜索默认免费且无需 Key，也可切换为 Tavily 并手动填写 Tavily Key。
+
+Vercel 函数最长运行时间设置为 300 秒。研究范围过大时，建议减少对比对象或缩小研究维度后重试。
+
 如需只启动 LangGraph Studio，在 PowerShell 中执行：
 
 ```powershell

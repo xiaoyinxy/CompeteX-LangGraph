@@ -1121,10 +1121,8 @@ def get_api_key_for_model(model_name: str, config: RunnableConfig):
     """从环境变量或配置中获取指定模型的 API Key。"""
     should_get_from_config = os.getenv("GET_API_KEYS_FROM_CONFIG", "false")
     model_name = model_name.lower()
-    if should_get_from_config.lower() == "true":
-        api_keys = config.get("configurable", {}).get("apiKeys", {})
-        if not api_keys:
-            return None
+    api_keys = config.get("configurable", {}).get("apiKeys", {})
+    if api_keys or should_get_from_config.lower() == "true":
         if model_name.startswith("openai:"):
             return api_keys.get("OPENAI_API_KEY")
         elif model_name.startswith("anthropic:"):
@@ -1148,10 +1146,8 @@ def get_api_key_for_model(model_name: str, config: RunnableConfig):
 def get_tavily_api_key(config: RunnableConfig):
     """从环境变量或配置中获取 Tavily API Key。"""
     should_get_from_config = os.getenv("GET_API_KEYS_FROM_CONFIG", "false")
-    if should_get_from_config.lower() == "true":
-        api_keys = config.get("configurable", {}).get("apiKeys", {})
-        if not api_keys:
-            return None
+    api_keys = config.get("configurable", {}).get("apiKeys", {})
+    if api_keys or should_get_from_config.lower() == "true":
         return api_keys.get("TAVILY_API_KEY")
     else:
         return os.getenv("TAVILY_API_KEY")
