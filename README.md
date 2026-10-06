@@ -1,151 +1,381 @@
-# 🔬 Open Deep Research
+# CompeteX · AI 竞品情报研究 Agent
 
-> **CompeteX 面试演示版**：本分支将官方 Open Deep Research 改造成面向 AI 产品团队的竞品情报研究 Agent。中文启动说明见 [README_COMPETEX_CN.md](README_COMPETEX_CN.md)，项目故事线见 [INTERVIEW_STORY_CN.md](INTERVIEW_STORY_CN.md)。改造内容包括本地免登录演示、成本友好的默认研究预算，以及区分事实、推断和建议的竞品报告规范。
+> 把一次分散、难复核的竞品调研，转化为有状态、可追踪、带来源的产品决策材料。
 
-<img width="1388" height="298" alt="full_diagram" src="https://github.com/user-attachments/assets/12a2371b-8be2-4219-9b48-90503eb43c69" />
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel-000000?logo=vercel)](https://compete-x-lang-graph.vercel.app/)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Agent_Workflow-1C3C3C)](https://github.com/langchain-ai/langgraph)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Deep research has broken out as one of the most popular agent applications. This is a simple, configurable, fully open source deep research agent that works across many model providers, search tools, and MCP servers. It's performance is on par with many popular deep research agents ([see Deep Research Bench leaderboard](https://huggingface.co/spaces/Ayanami0730/DeepResearch-Leaderboard)).
+**在线体验：** [https://compete-x-lang-graph.vercel.app/](https://compete-x-lang-graph.vercel.app/)
 
-<img width="817" height="666" alt="Screenshot 2025-07-13 at 11 21 12 PM" src="https://github.com/user-attachments/assets/052f2ed3-c664-4a4f-8ec2-074349dcaa3f" />
+CompeteX 是基于 LangChain 官方 [Open Deep Research](https://github.com/langchain-ai/open_deep_research) 二次设计的中文竞品研究产品原型。它围绕 AI 产品经理、战略分析师和创业团队的工作场景，将需求澄清、研究规划、五维并行检索、证据压缩、覆盖度反思和报告生成组织成一条 LangGraph 工作流。
 
-### 🔥 Recent Updates
+它不是替用户做决策的聊天机器人。它的目标是更快形成一份**有来源、可复核、明确区分事实与判断**的研究底稿。
 
-**August 14, 2025**: See our free course [here](https://academy.langchain.com/courses/deep-research-with-langgraph) (and course repo [here](https://github.com/langchain-ai/deep_research_from_scratch)) on building open deep research.
+## 为什么做 CompeteX
 
-**August 7, 2025**: Added GPT-5 and updated the Deep Research Bench evaluation w/ GPT-5 results.
+传统竞品研究通常存在几个问题：
 
-**August 2, 2025**: Achieved #6 ranking on the [Deep Research Bench Leaderboard](https://huggingface.co/spaces/Ayanami0730/DeepResearch-Leaderboard) with an overall score of 0.4344. 
+- 信息分散在官网、文档、定价页、更新日志、新闻和社区中；
+- 不同竞品的研究口径不一致，横向比较容易漏项；
+- 搜索结果、分析判断和产品建议混在一起，难以复核；
+- 调研过程不可追踪，重复搜索多，时间与模型成本难控制；
+- 最终报告看似完整，却没有说明证据缺口和待验证事项。
 
-**July 30, 2025**: Read about the evolution from our original implementations to the current version in our [blog post](https://rlancemartin.github.io/2025/07/30/bitter_lesson/).
+CompeteX 用固定研究框架和多 Agent 协作解决这些问题。
 
-**July 16, 2025**: Read more in our [blog](https://blog.langchain.com/open-deep-research/) and watch our [video](https://www.youtube.com/watch?v=agGiWUpxkhg) for a quick overview.
+## 核心能力
 
-### 🚀 Quickstart
+- **五维并行研究**：首轮固定从产品定位、目标用户、核心能力、商业模式、近期动态五个维度同时展开。
+- **统一横向口径**：每个 Researcher 在同一维度内比较全部研究对象，而不是简单地“一家竞品一个 Agent”。
+- **结构化证据**：研究结果保留来源标题、URL、发布日期、证据内容、置信度与证据缺口。
+- **覆盖度反思**：Supervisor 汇总首轮结果，只对明确缺失的信息发起补充研究。
+- **决策型报告**：最终输出区分已验证事实、分析判断、产品建议和待验证事项。
+- **中文 Web 搜索**：默认使用免 Key 的中文网页搜索，并针对公共搜索源限制并发，减少验证码和限流。
+- **BYOK 多模型支持**：用户可选择 DeepSeek、OpenAI、Anthropic 或 Google Gemini，并使用自己的 API Key。
+- **流式进度反馈**：前端实时展示需求澄清、研究简报、并行研究和报告生成等节点状态。
+- **成本边界**：在线版限制研究轮数、并发研究单元和单 Researcher 工具调用次数。
 
-1. Clone the repository and activate a virtual environment:
-```bash
-git clone https://github.com/langchain-ai/open_deep_research.git
-cd open_deep_research
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+## 工作流程
+
+```mermaid
+flowchart LR
+    U[用户研究问题] --> C[需求澄清]
+    C --> B[生成研究简报]
+    B --> S[Research Supervisor]
+
+    S --> P1[产品定位]
+    S --> P2[目标用户]
+    S --> P3[核心能力]
+    S --> P4[商业模式]
+    S --> P5[近期动态]
+
+    P1 --> E[结构化证据压缩]
+    P2 --> E
+    P3 --> E
+    P4 --> E
+    P5 --> E
+
+    E --> R{覆盖度反思}
+    R -->|存在明确缺口| S2[补充研究]
+    S2 --> E
+    R -->|证据已足够| F[生成决策报告]
+    F --> O[事实 / 判断 / 建议 / 待验证事项]
 ```
 
-2. Install dependencies:
+### 五个标准研究维度
+
+1. **产品定位**：核心问题、价值主张、使用场景、市场类别与差异化表述。
+2. **目标用户**：核心用户群、典型角色、关键需求、使用门槛与市场信号。
+3. **核心能力**：功能、工作流、技术能力、集成生态与能力边界。
+4. **商业模式**：定价、套餐、付费对象、销售方式与商业化路径。
+5. **近期动态**：最近十二个月的重要发布、合作、融资、监管和市场信号。
+
+## 报告标准
+
+竞品与产品战略类任务默认生成以下结构：
+
+1. 执行摘要
+2. 产品定位
+3. 目标用户
+4. 核心能力
+5. 商业模式
+6. 近期动态
+7. 横向对比与产品建议
+8. 待验证事项
+9. 来源
+
+重要结论会尽量标注高、中、低证据置信度。信息不足时，报告会明确写出“公开证据不足”，而不是用推断补齐事实。
+
+## 在线使用
+
+打开 [CompeteX 中文研究台](https://compete-x-lang-graph.vercel.app/)，点击右上角的“配置 Key”：
+
+1. 选择模型服务商；
+2. 填写对应的模型 API Key；
+3. 选择网页搜索方式；
+4. 按需调整研究模型和报告模型；
+5. 输入研究问题并开始研究。
+
+当前前端提供以下默认组合：
+
+- **DeepSeek**：`deepseek:deepseek-chat`
+- **OpenAI**：研究使用 `openai:gpt-4.1-mini`，报告使用 `openai:gpt-4.1`
+- **Anthropic**：`anthropic:claude-sonnet-4-5`
+- **Google Gemini**：研究使用 `google_genai:gemini-2.5-flash`，报告使用 `google_genai:gemini-2.5-pro`
+
+所选模型需要支持工具调用；研究流程中的部分节点还依赖结构化输出能力。
+
+### 搜索方式
+
+- **中文 Web 搜索**：默认选项，免费且无需 Key；移动 360 为主通道，Google 中文新闻为降级通道。
+- **Tavily**：需要额外填写 `TAVILY_API_KEY`。
+- **不使用搜索**：适合调试对话流程，不建议用于真实竞品研究。
+
+## BYOK 与密钥边界
+
+在线版采用 BYOK（Bring Your Own Key）模式：
+
+- API Key 只保存在当前页面的内存变量中；
+- 刷新页面或点击“清除”后，前端不再保留 Key；
+- Key 不会写入本仓库，也不需要保存到 Vercel 环境变量；
+- 发起研究时，Key 会随 HTTPS 请求发送到本项目的 Vercel Function，再用于调用所选模型服务商；
+- 应用代码不会持久化 Key，流式错误信息也会对请求中的 Key 做脱敏处理。
+
+请勿在研究问题、截图、Issue 或日志中粘贴真实密钥。生产化使用前，还应根据组织要求补充鉴权、审计、速率限制和密钥托管方案。
+
+## 本地运行
+
+### 环境要求
+
+- Python 3.10 或更高版本
+- [uv](https://docs.astral.sh/uv/)
+- 至少一个模型服务商的 API Key（通过页面或 `.env` 提供）
+
+### 1. 克隆并安装
+
 ```bash
+git clone https://github.com/xiaoyinxy/CompeteX-LangGraph.git
+cd CompeteX-LangGraph
 uv sync
-# or
-uv pip install -r pyproject.toml
 ```
 
-3. Set up your `.env` file to customize the environment variables (for model selection, search tools, and other configuration settings):
+### 2. 选择密钥配置方式
+
+如果使用完整 Web 应用，可以跳过 `.env`，启动后直接在页面的“配置 Key”窗口中填写密钥。
+
+如果使用 LangGraph Studio，先创建 `.env`：
+
+PowerShell：
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Bash：
+
 ```bash
 cp .env.example .env
 ```
 
-4. Launch agent with the LangGraph server locally:
+在 `.env` 中填写需要使用的密钥。Studio 的默认模型配置使用 DeepSeek：
+
+```env
+DEEPSEEK_API_KEY=your_deepseek_api_key
+
+# 可选：LangSmith 链路追踪
+LANGSMITH_API_KEY=
+LANGSMITH_PROJECT=CompeteX
+LANGSMITH_TRACING=false
+```
+
+`.env` 已被 `.gitignore` 忽略，请勿提交真实密钥。
+
+### 3. 启动完整 Web 应用
 
 ```bash
-# Install dependencies and start the LangGraph server
-uvx --refresh --from "langgraph-cli[inmem]" --with-editable . --python 3.11 langgraph dev --allow-blocking --no-reload
+uv run --with uvicorn uvicorn app:app --reload --host 127.0.0.1 --port 3000
 ```
 
-This will open the LangGraph Studio UI in your browser.
+打开：
 
-```
-- 🚀 API: http://127.0.0.1:2024
-- 🎨 Studio UI: https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024
-- 📚 API Docs: http://127.0.0.1:2024/docs
-```
+- 中文研究台：<http://127.0.0.1:3000/>
+- 健康检查：<http://127.0.0.1:3000/api/health>
 
-Ask a question in the `messages` input field and click `Submit`. Select different configuration in the "Manage Assistants" tab.
+本地 Web 应用同样使用页面内 BYOK 配置；无需把浏览器中使用的 Key 写入 `.env`。
 
-### ⚙️ Configurations
+## LangGraph Studio
 
-#### LLM :brain:
-
-Open Deep Research supports a wide range of LLM providers via the [init_chat_model() API](https://python.langchain.com/docs/how_to/chat_models_universal_init/). It uses LLMs for a few different tasks. See the below model fields in the [configuration.py](https://github.com/langchain-ai/open_deep_research/blob/main/src/open_deep_research/configuration.py) file for more details. This can be accessed via the LangGraph Studio UI. 
-
-- **Summarization** (default: `openai:gpt-4.1-mini`): Summarizes search API results
-- **Research** (default: `openai:gpt-4.1`): Power the search agent
-- **Compression** (default: `openai:gpt-4.1`): Compresses research findings
-- **Final Report Model** (default: `openai:gpt-4.1`): Write the final report
-
-> Note: the selected model will need to support [structured outputs](https://python.langchain.com/docs/integrations/chat/) and [tool calling](https://python.langchain.com/docs/how_to/tool_calling/).
-
-> Note: For OpenRouter: Follow [this guide](https://github.com/langchain-ai/open_deep_research/issues/75#issuecomment-2811472408) and for local models via Ollama  see [setup instructions](https://github.com/langchain-ai/open_deep_research/issues/65#issuecomment-2743586318).
-
-#### Search API :mag:
-
-Open Deep Research supports a wide range of search tools. By default it uses the [Tavily](https://www.tavily.com/) search API. Has full MCP compatibility and work native web search for Anthropic and OpenAI. See the `search_api` and `mcp_config` fields in the [configuration.py](https://github.com/langchain-ai/open_deep_research/blob/main/src/open_deep_research/configuration.py) file for more details. This can be accessed via the LangGraph Studio UI. 
-
-#### Other 
-
-See the fields in the [configuration.py](https://github.com/langchain-ai/open_deep_research/blob/main/src/open_deep_research/configuration.py) for various other settings to customize the behavior of Open Deep Research. 
-
-### 📊 Evaluation
-
-Open Deep Research is configured for evaluation with [Deep Research Bench](https://huggingface.co/spaces/Ayanami0730/DeepResearch-Leaderboard). This benchmark has 100 PhD-level research tasks (50 English, 50 Chinese), crafted by domain experts across 22 fields (e.g., Science & Tech, Business & Finance) to mirror real-world deep-research needs. It has 2 evaluation metrics, but the leaderboard is based on the RACE score. This uses LLM-as-a-judge (Gemini) to evaluate research reports against a golden set of reports compiled by experts across a set of metrics.
-
-#### Usage
-
-> Warning: Running across the 100 examples can cost ~$20-$100 depending on the model selection.
-
-The dataset is available on [LangSmith via this link](https://smith.langchain.com/public/c5e7a6ad-fdba-478c-88e6-3a388459ce8b/d). To kick off evaluation, run the following command:
+如需观察每个节点的输入、输出、耗时和调用轨迹，可安装完整开发依赖并启动 LangGraph Studio：
 
 ```bash
-# Run comprehensive evaluation on LangSmith datasets
-python tests/run_evaluate.py
+uv sync --extra full
+uv run langgraph dev --allow-blocking --no-reload
 ```
 
-This will provide a link to a LangSmith experiment, which will have a name `YOUR_EXPERIMENT_NAME`. Once this is done, extract the results to a JSONL file that can be submitted to the Deep Research Bench.
+随后访问：
+
+- Studio：<https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024>
+- API 文档：<http://127.0.0.1:2024/docs>
+- 健康检查：<http://127.0.0.1:2024/ok>
+
+Windows 用户也可以运行：
+
+```powershell
+.\scripts\start_demo.ps1
+```
+
+## Vercel 部署
+
+仓库已经包含 Vercel 所需配置：
+
+- `app.py`：FastAPI 入口、流式研究 API 与静态前端托管；
+- `vercel.json`：Python Function 时长与部署排除项；
+- `pyproject.toml`：运行依赖和 `app:app` 入口声明；
+- `web/`：无需构建步骤的前端资源。
+
+部署步骤：
+
+1. 在 Vercel 中导入本 GitHub 仓库；
+2. 保持默认构建设置；
+3. 部署完成后打开生产域名；
+4. 在页面中填写自己的模型 Key。
+
+BYOK 模式下无需在 Vercel 保存模型 Key。当前 Function 最长运行时间配置为 300 秒；研究范围过大时，应减少竞品数量或缩小研究问题。
+
+## HTTP API
+
+### 健康检查
+
+```http
+GET /api/health
+```
+
+响应：
+
+```json
+{
+  "status": "ok",
+  "service": "competex"
+}
+```
+
+### 发起研究
+
+```http
+POST /api/research
+Content-Type: application/json
+```
+
+请求示例：
+
+```json
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "对比 Cursor、GitHub Copilot 和 Windsurf，并给出中国开发者工具团队的切入机会。"
+    }
+  ],
+  "keys": {
+    "deepseek": "your_api_key"
+  },
+  "search_api": "bing",
+  "research_model": "deepseek:deepseek-chat",
+  "final_report_model": "deepseek:deepseek-chat",
+  "allow_clarification": true
+}
+```
+
+接口以 `application/x-ndjson` 流式返回事件。事件类型包括：
+
+- `started`：研究任务已开始；
+- `progress`：某个 LangGraph 节点已完成；
+- `message`：澄清问题或中间消息；
+- `result`：最终报告内容；
+- `complete`：本轮流程结束，状态可能是 `complete` 或 `awaiting_input`；
+- `error`：运行错误，响应会尝试脱敏请求中的 API Key。
+
+## 项目结构
+
+```text
+CompeteX-LangGraph/
+├─ app.py                         # FastAPI / Vercel 入口
+├─ web/                           # 中文研究台前端
+│  ├─ index.html
+│  ├─ app.js
+│  ├─ styles.css
+│  └─ config.css
+├─ src/open_deep_research/
+│  ├─ deep_researcher.py          # LangGraph 主图、Supervisor 与 Researcher
+│  ├─ prompts.py                  # 中文研究与报告规范
+│  ├─ configuration.py            # 模型、搜索、并发与预算配置
+│  ├─ state.py                    # Agent State 与结构化结果 Schema
+│  └─ utils.py                    # 搜索、模型、MCP 与通用工具
+├─ tests/
+│  ├─ test_competex_research_contract.py
+│  └─ test_vercel_app.py
+├─ docs/PRODUCT_DESIGN_CN.md      # 产品设计与评测方案
+├─ demo/DEMO_QUESTIONS_CN.md      # 演示题库
+├─ langgraph.json                 # LangGraph 图配置
+├─ vercel.json                    # Vercel Function 配置
+└─ pyproject.toml                 # Python 项目与依赖配置
+```
+
+## 测试与质量检查
+
+安装开发依赖：
 
 ```bash
-python tests/extract_langsmith_data.py --project-name "YOUR_EXPERIMENT_NAME" --model-name "you-model-name" --dataset-name "deep_research_bench"
+uv sync --extra dev
 ```
 
-This creates `tests/expt_results/deep_research_bench_model-name.jsonl` with the required format. Move the generated JSONL file to a local clone of the Deep Research Bench repository and follow their [Quick Start guide](https://github.com/Ayanami0730/deep_research_bench?tab=readme-ov-file#quick-start) for evaluation submission.
+运行回归测试：
 
-#### Results 
+```bash
+uv run pytest
+```
 
-| Name | Commit | Summarization | Research | Compression | Total Cost | Total Tokens | RACE Score | Experiment |
-|------|--------|---------------|----------|-------------|------------|--------------|------------|------------|
-| GPT-5 | [ca3951d](https://github.com/langchain-ai/open_deep_research/pull/168/commits) | openai:gpt-4.1-mini | openai:gpt-5 | openai:gpt-4.1 |  | 204,640,896 | 0.4943 | [Link](https://smith.langchain.com/o/ebbaf2eb-769b-4505-aca2-d11de10372a4/datasets/6e4766ca-613c-4bda-8bde-f64f0422bbf3/compare?selectedSessions=4d5941c8-69ce-4f3d-8b3e-e3c99dfbd4cc&baseline=undefined) |
-| Defaults | [6532a41](https://github.com/langchain-ai/open_deep_research/commit/6532a4176a93cc9bb2102b3d825dcefa560c85d9) | openai:gpt-4.1-mini | openai:gpt-4.1 | openai:gpt-4.1 | $45.98 | 58,015,332 | 0.4309 | [Link](https://smith.langchain.com/o/ebbaf2eb-769b-4505-aca2-d11de10372a4/datasets/6e4766ca-6[…]ons=cf4355d7-6347-47e2-a774-484f290e79bc&baseline=undefined) |
-| Claude Sonnet 4 | [f877ea9](https://github.com/langchain-ai/open_deep_research/pull/163/commits/f877ea93641680879c420ea991e998b47aab9bcc) | openai:gpt-4.1-mini | anthropic:claude-sonnet-4-20250514 | openai:gpt-4.1 | $187.09 | 138,917,050 | 0.4401 | [Link](https://smith.langchain.com/o/ebbaf2eb-769b-4505-aca2-d11de10372a4/datasets/6e4766ca-6[…]ons=04f6002d-6080-4759-bcf5-9a52e57449ea&baseline=undefined) |
-| Deep Research Bench Submission | [c0a160b](https://github.com/langchain-ai/open_deep_research/commit/c0a160b57a9b5ecd4b8217c3811a14d8eff97f72) | openai:gpt-4.1-nano | openai:gpt-4.1 | openai:gpt-4.1 | $87.83 | 207,005,549 | 0.4344 | [Link](https://smith.langchain.com/o/ebbaf2eb-769b-4505-aca2-d11de10372a4/datasets/6e4766ca-6[…]ons=e6647f74-ad2f-4cb9-887e-acb38b5f73c0&baseline=undefined) |
+检查当前 Vercel 入口与 CompeteX 回归测试：
 
-### 🚀 Deployments and Usage
+```bash
+uv run ruff check app.py tests/test_vercel_app.py tests/test_competex_research_contract.py
+```
 
-#### LangGraph Studio
+当前回归测试覆盖：
 
-Follow the [quickstart](#-quickstart) to start LangGraph server locally and test the agent out on LangGraph Studio.
+- 五个标准研究维度是否完整；
+- 五个 Researcher 是否同批并行执行；
+- 单个研究单元失败时是否保留其他结果；
+- 结构化证据与证据缺口格式；
+- 中文搜索结果和直接来源链接解析；
+- Vercel 健康检查、静态页面和请求级 BYOK 配置。
 
-#### Hosted deployment
- 
-You can easily deploy to [LangGraph Platform](https://langchain-ai.github.io/langgraph/concepts/#deployment-options). 
+## 推荐体验问题
 
-#### Open Agent Platform
+```text
+请为计划进入中国市场的 AI 会议助手团队，对比 Otter.ai、Fireflies.ai 和
+Notion AI Meeting Notes。研究范围限定为截至今天可公开验证的信息，重点覆盖
+目标用户、核心工作流、定价、集成生态、差异化、近期产品动态和用户采用阻力。
+优先引用官网、定价页、帮助文档和更新日志。区分事实、推断与建议；信息不足时
+明确说明。最后给出一个面向 20—200 人中国科技公司的 MVP 机会清单，并按价值、
+可行性和风险排序。
+```
 
-Open Agent Platform (OAP) is a UI from which non-technical users can build and configure their own agents. OAP is great for allowing users to configure the Deep Researcher with different MCP tools and search APIs that are best suited to their needs and the problems that they want to solve.
+更多题目见 [demo/DEMO_QUESTIONS_CN.md](demo/DEMO_QUESTIONS_CN.md)。
 
-We've deployed Open Deep Research to our public demo instance of OAP. All you need to do is add your API Keys, and you can test out the Deep Researcher for yourself! Try it out [here](https://oap.langchain.com)
+## 已知边界
 
-You can also deploy your own instance of OAP, and make your own custom agents (like Deep Researcher) available on it to your users.
-1. [Deploy Open Agent Platform](https://docs.oap.langchain.com/quickstart)
-2. [Add Deep Researcher to OAP](https://docs.oap.langchain.com/setup/agents)
+- 搜索结果受网页可访问性、搜索源质量和时效性影响；
+- 引用存在不代表结论一定正确，关键结论仍需人工复核；
+- 公共中文搜索可能遇到限流、验证码或页面结构变化；
+- 不同模型对工具调用和结构化输出的兼容性不同；
+- Vercel Serverless Function 不适合无限时长或超大规模研究；
+- 当前项目是个人产品原型，不包含企业级租户隔离、权限系统和完整审计能力。
 
-### Legacy Implementations 🏛️
+## 来源、改造范围与致谢
 
-The `src/legacy/` folder contains two earlier implementations that provide alternative approaches to automated research. They are less performant than the current implementation, but provide alternative ideas understanding the different approaches to deep research.
+CompeteX 基于 LangChain 官方 [Open Deep Research](https://github.com/langchain-ai/open_deep_research) 开发，保留其 LangGraph 深度研究架构，并针对中文竞品研究场景完成了以下产品化改造：
 
-#### 1. Workflow Implementation (`legacy/graph.py`)
-- **Plan-and-Execute**: Structured workflow with human-in-the-loop planning
-- **Sequential Processing**: Creates sections one by one with reflection
-- **Interactive Control**: Allows feedback and approval of report plans
-- **Quality Focused**: Emphasizes accuracy through iterative refinement
+- 固定的五维并行竞品研究流程；
+- 中文搜索策略和一手来源优先级；
+- 结构化证据、置信度与证据缺口；
+- 面向产品决策的中文报告格式；
+- DeepSeek 兼容处理和成本边界；
+- 中文 Web UI、BYOK 配置和流式进度展示；
+- FastAPI API 与 Vercel 部署；
+- 面向关键研究契约的自动化测试。
 
-#### 2. Multi-Agent Implementation (`legacy/multi_agent.py`)  
-- **Supervisor-Researcher Architecture**: Coordinated multi-agent system
-- **Parallel Processing**: Multiple researchers work simultaneously
-- **Speed Optimized**: Faster report generation through concurrency
-- **MCP Support**: Extensive Model Context Protocol integration
+这是对开源研究框架的垂直场景产品化实践，不应将上游项目的基准成绩表述为本项目独立取得的成绩。
+
+## 相关文档
+
+- [产品设计与评测方案](docs/PRODUCT_DESIGN_CN.md)
+- [演示题库](demo/DEMO_QUESTIONS_CN.md)
+- [项目故事线](INTERVIEW_STORY_CN.md)
+- [改造思路说明](产品改造.md)
+
+## License
+
+本项目沿用上游项目的 [MIT License](LICENSE)。
